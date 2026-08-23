@@ -59,9 +59,9 @@ private:
     void *m_user_address;
 };
 
-#if defined(__linux__) || defined(_MSC_VER)
+#if defined(__linux__) || defined(_MSC_VER) || defined(__APPLE__)
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
 class PageAlignedDmaAbleBuffer : public DmaAbleBuffer {
 public:
     static Expected<DmaAbleBufferPtr> create(size_t size)

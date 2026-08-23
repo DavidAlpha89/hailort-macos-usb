@@ -16,7 +16,7 @@
 #include "common/utils.hpp"
 #include "hailo_ioctl_common.h"
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__APPLE__)
 #include <sys/mman.h>
 #elif defined(__QNX__)
 #include <fcntl.h>
@@ -625,7 +625,7 @@ hailo_status HailoRTDriver::vdma_continuous_buffer_free(const CmaBufferInfo &buf
 
     return status;
 }
-#elif defined(__QNX__) || defined(_WIN32)
+#elif defined(__QNX__) || defined(_WIN32) || defined(__APPLE__)
 
 Expected<CmaBufferInfo> HailoRTDriver::vdma_continuous_buffer_alloc(size_t /* size */)
 {
@@ -791,7 +791,7 @@ int HailoRTDriver::run_ioctl(uint32_t ioctl_code, PointerType param)
 
     return run_hailo_ioctl(m_fd, ioctl_code, param);
 }
-#elif defined(__QNX__) || defined(_WIN32)
+#elif defined(__QNX__) || defined(_WIN32) || defined(__APPLE__)
 
 template<typename PointerType>
 int HailoRTDriver::run_ioctl(uint32_t ioctl_code, PointerType param)

@@ -13,6 +13,7 @@
 #define _HAILO_FORK_SUPPORT_HPP_
 
 #include <mutex>
+#include <condition_variable>
 #include <functional>
 #include <map>
 #include <assert.h>
@@ -21,7 +22,7 @@
 #include <sys/mman.h>
 #endif
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__APPLE__)
 // Windows did the right choice - not supporting fork() at all, so we don't support it either.
 #define HAILO_IS_FORK_SUPPORTED
 #endif

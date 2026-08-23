@@ -11,7 +11,7 @@ FUNCTION(disable_exceptions target)
 ENDFUNCTION()
 
 FUNCTION(exclude_archive_libs_symbols target)
-    if(WIN32)
+    if(WIN32 OR APPLE)
         # TODO: check it
     elseif(UNIX)
         get_property(TEMP_LINK_FLAGS TARGET ${target} PROPERTY LINK_FLAGS)

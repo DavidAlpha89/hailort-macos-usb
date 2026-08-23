@@ -30,7 +30,7 @@
 /** Includes and Typedefs */
 // underlying_handle_t
 #ifndef underlying_handle_t
-#if defined(__linux__) || defined(__QNX__)
+#if defined(__linux__) || defined(__QNX__) || defined(__APPLE__)
 #include <unistd.h>
 typedef int underlying_handle_t;
 #elif defined(_MSC_VER)

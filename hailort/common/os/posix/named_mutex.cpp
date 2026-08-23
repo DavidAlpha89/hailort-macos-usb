@@ -13,8 +13,13 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <unistd.h>
 
+#if defined(__APPLE__)
+static const std::string HAILO_LOCK_FILES_DIR = "/tmp/hailort-" + std::to_string(getuid()) + "/";
+#else
 static const std::string HAILO_LOCK_FILES_DIR = "/run/lock/hailo/";
+#endif
 static const std::string LOCK_FILE_EXTENSION = ".lock";
 
 namespace hailort
@@ -26,11 +31,18 @@ Expected<std::shared_ptr<NamedMutex>> NamedMutex::create(const std::string &path
     const auto full_path = HAILO_LOCK_FILES_DIR + path + LOCK_FILE_EXTENSION;
 
     auto parent_path = std::filesystem::path(full_path).parent_path();
+    std::error_code ec;
     if (!parent_path.empty() && !std::filesystem::exists(parent_path)) {
-        std::error_code ec;
         std::filesystem::create_directories(parent_path, ec);
         CHECK(!ec, HAILO_FILE_OPERATION_FAILURE, "Failed to create directory {}: {}", parent_path.string(), ec.message());
     }
+#if defined(__APPLE__)
+    if (!parent_path.empty()) {
+        std::filesystem::permissions(parent_path, std::filesystem::perms::owner_all,
+            std::filesystem::perm_options::replace, ec);
+        CHECK(!ec, HAILO_FILE_OPERATION_FAILURE, "Failed to secure directory {}: {}", parent_path.string(), ec.message());
+    }
+#endif
 
     TRY(auto locked_file, LockedFile::create(full_path, "w"));
 

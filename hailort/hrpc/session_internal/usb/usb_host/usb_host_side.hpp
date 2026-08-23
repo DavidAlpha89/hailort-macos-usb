@@ -20,7 +20,7 @@
 #include "hrpc/session_internal/usb/usb_host/libusb_event_thread.hpp"
 #include "hrpc/session_internal/usb/usb_host/usb_transfer_queue.hpp"
 
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 
 namespace hailort
 {

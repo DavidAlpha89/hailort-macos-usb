@@ -119,6 +119,22 @@ Expected<void*> UsbUtils::open_usb_device(const hailo_usb_device_info_t &usb_inf
             libusb_device_handle *handle = nullptr;
             ret = libusb_open(device, &handle);
             CHECK(0 == ret, HAILO_INTERNAL_FAILURE, "Failed to open USB device, libusb error: {}", libusb_error_name(ret));
+#if defined(__APPLE__)
+            int active_configuration = 0;
+            ret = libusb_get_configuration(handle, &active_configuration);
+            if (0 != ret) {
+                libusb_close(handle);
+                return make_unexpected(HAILO_LIBUSB_FAILURE);
+            }
+            if (0 == active_configuration) {
+                ret = libusb_set_configuration(handle, 1);
+                if (0 != ret) {
+                    libusb_close(handle);
+                    LOGGER__ERROR("Failed to select USB configuration 1, libusb error: {}", libusb_error_name(ret));
+                    return make_unexpected(HAILO_LIBUSB_FAILURE);
+                }
+            }
+#endif
             return handle;
         }
     }

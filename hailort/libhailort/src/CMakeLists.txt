@@ -90,10 +90,10 @@ if(WIN32)
     set_property(TARGET libhailort PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 else()
-    target_link_libraries(libhailort PRIVATE
-        m # libmath
-        atomic
-    )
+    target_link_libraries(libhailort PRIVATE m) # libmath
+    if(NOT APPLE)
+        target_link_libraries(libhailort PRIVATE atomic)
+    endif()
 
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     # Hack to support cross-compilation - https://stackoverflow.com/a/49086560
@@ -105,6 +105,9 @@ target_link_libraries(libhailort PRIVATE hef_proto)
 target_link_libraries(libhailort PRIVATE profiler_proto)
 target_link_libraries(libhailort PRIVATE scheduler_mon_proto)
 target_link_libraries(libhailort PRIVATE hailort_common)
+if(APPLE)
+    target_link_libraries(libhailort PRIVATE pevents)
+endif()
 target_link_libraries(libhailort PRIVATE Eigen3::Eigen)
 target_link_libraries(libhailort PRIVATE rpc_proto)
 target_link_libraries(libhailort PRIVATE genai_scheme_proto)

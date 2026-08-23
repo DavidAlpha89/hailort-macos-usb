@@ -155,6 +155,24 @@ static ULONG FORCEINLINE _IOC_(ULONG nr, ULONG type, ULONG size, bool read, bool
 #define HAILO_NNC_IOCTL_MAGIC       'n'
 #define HAILO_PCI_EP_IOCTL_MAGIC    'p'
 
+#elif defined(__APPLE__)
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <stdbool.h>
+#include <limits.h>
+
+#define _IOW_       _IOW
+#define _IOR_       _IOR
+#define _IOWR_      _IOWR
+#define _IO_        _IO
+
+#define HAILO_GENERAL_IOCTL_MAGIC   'g'
+#define HAILO_VDMA_IOCTL_MAGIC      'v'
+#define HAILO_SOC_IOCTL_MAGIC       's'
+#define HAILO_NNC_IOCTL_MAGIC       'n'
+#define HAILO_PCI_EP_IOCTL_MAGIC    'p'
+
 #elif defined(__QNX__) // #ifdef _MSC_VER
 #include <devctl.h>
 #include <stdint.h>

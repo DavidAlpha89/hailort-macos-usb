@@ -44,7 +44,7 @@ if(WIN32)
 elseif(UNIX)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "QCC")
         set(HAILORT_COMPILE_OPTIONS ${HAILORT_COMPILE_OPTIONS} -Wall -Wextra -Wconversion)
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(HAILORT_COMPILE_OPTIONS ${HAILORT_COMPILE_OPTIONS} -Wall -Wextra
             # TODO: remove me warnings
             -Wno-conversion

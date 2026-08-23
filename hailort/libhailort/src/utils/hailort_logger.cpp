@@ -19,7 +19,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/android_sink.h>
 #include <spdlog/sinks/null_sink.h>
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 #include <pwd.h>
 #include <spdlog/sinks/syslog_sink.h>
 #endif
@@ -55,7 +55,7 @@ namespace hailort
 
 #define PERIODIC_FLUSH_INTERVAL_IN_SECONDS (5)
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 static std::string get_home_directory()
 {
     const char *homedir = getenv("HOME");
@@ -87,7 +87,7 @@ static bool is_path_accesible(const std::string &path)
         return false;
     }
 }
-#endif /* __unix__ */
+#endif /* defined(__unix__) || defined(__APPLE__) */
 
 #ifdef _WIN32
 static bool is_path_accesible(const std::string &path)
@@ -286,7 +286,7 @@ HailoRTLogger::HailoRTLogger(spdlog::level::level_enum console_level, spdlog::le
     m_console_sink->set_pattern(HAILORT_CONSOLE_LOGGER_PATTERN);
     std::vector<std::shared_ptr<spdlog::sinks::sink>> sink_vector = { m_console_sink, m_main_log_file_sink, m_local_log_file_sink };
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
     m_should_print_to_syslog = is_env_variable_on(HAILORT_LOGGER_PRINT_TO_SYSLOG_ENV_VAR, HAILORT_LOGGER_PRINT_TO_SYSLOG_ENV_VAR_VALUE);
     if (m_should_print_to_syslog) {
         m_syslog_sink = make_shared_nothrow<spdlog::sinks::syslog_sink_mt>("HailoRT", 0, LOG_USER, true);

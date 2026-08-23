@@ -46,9 +46,12 @@ target_link_libraries(hailort_common
     xxhash
 )
 
-if(CMAKE_SYSTEM_NAME STREQUAL QNX)
+if(CMAKE_SYSTEM_NAME STREQUAL QNX OR APPLE)
     include(${HAILO_EXTERNALS_CMAKE_SCRIPTS}/pevents.cmake)
-    target_link_libraries(hailort_common PRIVATE pevents pci)
+    target_link_libraries(hailort_common PRIVATE pevents)
+    if(CMAKE_SYSTEM_NAME STREQUAL QNX)
+        target_link_libraries(hailort_common PRIVATE pci)
+    endif()
 endif()
 
 set_target_properties(hailort_common PROPERTIES
@@ -69,7 +72,7 @@ if(WIN32)
         Iphlpapi                # IP Helper API (i.e GetIpNetTable)
         Shlwapi                 # Shell API (i.e PathIsDirectoryA)
     )
-elseif(NOT CMAKE_SYSTEM_NAME STREQUAL Android)
+elseif(NOT CMAKE_SYSTEM_NAME STREQUAL Android AND NOT APPLE)
     # TODO: HRT-14770 fix android build
     target_link_libraries(hailort_common PRIVATE
         rt                       # Used for shm api (i.e shm_open)

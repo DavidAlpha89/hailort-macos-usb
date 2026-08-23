@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5.0)
 
-if (CMAKE_SYSTEM_NAME STREQUAL QNX)
+if (CMAKE_SYSTEM_NAME STREQUAL QNX OR APPLE)
     add_subdirectory(qnx)
 else()
     add_subdirectory(linux)

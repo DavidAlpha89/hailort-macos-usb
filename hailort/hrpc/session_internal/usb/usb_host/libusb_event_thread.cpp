@@ -11,7 +11,7 @@
 #include "common/logger_macros.hpp"
 #include "common/utils.hpp"
 
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 #include <chrono>
 
 namespace hailort

@@ -180,6 +180,11 @@ Expected<std::shared_ptr<UsbInterface>> UsbSessionHostSide::get_available_interf
 hailo_status UsbSessionHostSide::claim_interface(libusb_device_handle *handle, usb_interface_t interface)
 {
     int ret = libusb_kernel_driver_active(handle, interface);
+#if defined(__APPLE__)
+    if ((LIBUSB_ERROR_NOT_FOUND == ret) || (LIBUSB_ERROR_NOT_SUPPORTED == ret)) {
+        ret = 0;
+    }
+#endif
     CHECK((0 == ret) || (1 == ret), HAILO_LIBUSB_FAILURE, "Failed to get kernel driver status: {}", libusb_error_name(ret));
     if (1 == ret) {
         ret = libusb_detach_kernel_driver(handle, interface);
