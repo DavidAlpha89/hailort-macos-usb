@@ -62,6 +62,8 @@ build-macos-usb/hailort/hailortcli/hailortcli run2 -t 3 set-net /path/to/model.h
 build-macos-usb/hailort/libhailort/examples/genai/chat_example/chat_example /path/to/llm.hef
 ```
 
+Use `/exit` to leave `chat_example` cleanly so the device-side VDevice is released.
+
 Use a USB-C port that advertises 3A for performance testing. A 1.5A port can place the
 module in reduced-performance mode.
 
