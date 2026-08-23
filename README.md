@@ -5,6 +5,8 @@
 [![Device](https://img.shields.io/badge/device-ASUS%20UGen300-2563eb)](https://github.com/relaxcloud-cn/hailort-macos-usb)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](hailort/LICENSE)
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 An experimental userspace port of HailoRT 5.3.0 for the ASUS UGen300 USB AI
 Accelerator on Apple Silicon macOS.
 
