@@ -28,6 +28,7 @@ ASUS UGen300 USB AI 加速器。
 | Qwen3-1.7B GenAI 推理 | ✅ |
 | LLM 加载、首字延迟和吞吐基准 | ✅ |
 | Ollama 与 OpenAI 兼容接口 | ✅ [配套仓库](https://github.com/relaxcloud-cn/hailo-ollama-macos) |
+| 交互式 Runtime RPC Shell | 🧪 实验功能，设备端构建默认关闭 |
 | Intel Mac、PCIe、DMA-BUF、GStreamer | ❌ 暂不支持 |
 | pyHailoRT wheel | ❌ 尚未打包 |
 | 代码签名与公证 | ❌ 尚未实现 |
@@ -155,6 +156,7 @@ ioreg -p IOUSB -w0 | grep UGen300
 
 - [完整 macOS USB 指南](docs/macos-usb.md)
 - [Loader VM 准备指南](docs/macos-loader-vm.md)
+- [交互式 Runtime RPC Shell](docs/runtime-rpc-shell.md)
 - [配套 Hailo-Ollama/OpenAI 服务](https://github.com/relaxcloud-cn/hailo-ollama-macos)
 - [贡献指南](CONTRIBUTING.md)
 - [安全策略](SECURITY.md)

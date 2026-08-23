@@ -12,13 +12,97 @@
 #include "common/utils.hpp"
 
 #include <algorithm>
+#include <array>
+#include <cerrno>
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <poll.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
 
 constexpr auto INVALID_LCS = 0;
 constexpr auto INVALID_CLOCK_RATE = 0;
 #define MHz (1000 * 1000)
+
+namespace
+{
+
+class ScopedRawTerminal final
+{
+public:
+    hailo_status enable()
+    {
+        if (!isatty(STDIN_FILENO)) {
+            return HAILO_SUCCESS;
+        }
+        CHECK(0 == tcgetattr(STDIN_FILENO, &m_original), HAILO_INTERNAL_FAILURE,
+            "Failed reading local terminal settings");
+        auto raw = m_original;
+        cfmakeraw(&raw);
+        CHECK(0 == tcsetattr(STDIN_FILENO, TCSANOW, &raw), HAILO_INTERNAL_FAILURE,
+            "Failed enabling local raw terminal mode");
+        m_enabled = true;
+        return HAILO_SUCCESS;
+    }
+
+    ~ScopedRawTerminal()
+    {
+        if (m_enabled) {
+            (void)tcsetattr(STDIN_FILENO, TCSANOW, &m_original);
+        }
+    }
+
+private:
+    termios m_original = {};
+    bool m_enabled = false;
+};
+
+class DebugShellSessionGuard final
+{
+public:
+    DebugShellSessionGuard(Device &device, const std::string &token, uint64_t session_id) :
+        m_device(device), m_token(token), m_session_id(session_id)
+    {}
+
+    ~DebugShellSessionGuard()
+    {
+        (void)m_device.debug_shell_close(m_token, m_session_id);
+    }
+
+private:
+    Device &m_device;
+    const std::string &m_token;
+    uint64_t m_session_id;
+};
+
+std::pair<uint32_t, uint32_t> terminal_size()
+{
+    winsize size = {};
+    if ((0 == ioctl(STDOUT_FILENO, TIOCGWINSZ, &size)) && (size.ws_row > 0) && (size.ws_col > 0)) {
+        return {size.ws_row, size.ws_col};
+    }
+    return {24, 80};
+}
+
+hailo_status write_all(int fd, const std::string &data)
+{
+    size_t offset = 0;
+    while (offset < data.size()) {
+        const auto bytes_written = write(fd, data.data() + offset, data.size() - offset);
+        if (bytes_written > 0) {
+            offset += static_cast<size_t>(bytes_written);
+        } else if ((bytes_written < 0) && (EINTR == errno)) {
+            continue;
+        } else {
+            return HAILO_INTERNAL_FAILURE;
+        }
+    }
+    return HAILO_SUCCESS;
+}
+
+} /* namespace */
 
 
 
@@ -274,16 +358,16 @@ hailo_status FwControlDebugHaltContinueCommand::execute_on_device(Device &device
 }
 
 FwControlDebugShellCommand::FwControlDebugShellCommand(CLI::App &parent_app) :
-    DeviceCommand(parent_app.add_subcommand("shell", "Execute a command on an explicitly enabled debug Runtime")),
-    m_timeout_ms(5000), m_max_output_bytes(64 * 1024)
+    DeviceCommand(parent_app.add_subcommand("shell", "Open an interactive PTY or execute one command on a debug Runtime")),
+    m_timeout_ms(5000), m_max_output_bytes(1536)
 {
-    m_app->add_option("-c,--command", m_command, "Shell command to execute")->required();
+    m_app->add_option("-c,--command", m_command, "Execute one command instead of opening an interactive PTY");
     m_app->add_option("--token-file", m_token_file,
         "File containing the debug token; otherwise HAILO_DEBUG_SHELL_TOKEN is used");
     m_app->add_option("--timeout-ms", m_timeout_ms, "Command timeout in milliseconds")
         ->check(CLI::Range(1U, 30000U));
     m_app->add_option("--max-output-bytes", m_max_output_bytes, "Maximum combined stdout/stderr")
-        ->check(CLI::Range(1U, 64U * 1024U));
+        ->check(CLI::Range(1U, 1536U));
 }
 
 std::string FwControlDebugShellCommand::load_token() const
@@ -309,8 +393,13 @@ std::string FwControlDebugShellCommand::load_token() const
 hailo_status FwControlDebugShellCommand::execute_on_device(Device &device)
 {
     const auto token = load_token();
-    CHECK(token.size() >= 32, HAILO_INVALID_ARGUMENT,
-        "Provide a token file or set HAILO_DEBUG_SHELL_TOKEN (minimum 32 characters)");
+    CHECK((token.size() >= 32) && (token.size() <= 96), HAILO_INVALID_ARGUMENT,
+        "Provide a token between 32 and 96 characters using a token file or HAILO_DEBUG_SHELL_TOKEN");
+    if (m_command.empty()) {
+        return execute_interactive(device, token);
+    }
+    CHECK(m_command.size() <= 128, HAILO_INVALID_ARGUMENT,
+        "One-shot commands are limited to 128 bytes by the HRPC request buffer; use interactive mode for longer input");
     TRY(auto result, device.debug_shell_exec(token, m_command, std::chrono::milliseconds(m_timeout_ms),
         m_max_output_bytes));
     std::cout << result.output;
@@ -321,6 +410,47 @@ hailo_status FwControlDebugShellCommand::execute_on_device(Device &device)
               << " timed_out=" << (result.timed_out ? "true" : "false")
               << " truncated=" << (result.truncated ? "true" : "false") << std::endl;
     return (0 == result.exit_code) ? HAILO_SUCCESS : HAILO_INTERNAL_FAILURE;
+}
+
+hailo_status FwControlDebugShellCommand::execute_interactive(Device &device, const std::string &token)
+{
+    const auto initial_size = terminal_size();
+    TRY(auto session_id, device.debug_shell_open(token, initial_size.first, initial_size.second));
+    DebugShellSessionGuard session_guard(device, token, session_id);
+    ScopedRawTerminal terminal;
+    CHECK_SUCCESS(terminal.enable());
+
+    bool local_input_closed = false;
+    while (true) {
+        std::string input;
+        if (!local_input_closed) {
+            pollfd local_input = {STDIN_FILENO, POLLIN | POLLHUP, 0};
+            const auto poll_result = poll(&local_input, 1, 0);
+            if ((poll_result > 0) && (0 != (local_input.revents & POLLIN))) {
+                std::array<char, 128> buffer = {};
+                const auto bytes_read = read(STDIN_FILENO, buffer.data(), buffer.size());
+                if (bytes_read > 0) {
+                    input.assign(buffer.data(), static_cast<size_t>(bytes_read));
+                } else if (0 == bytes_read) {
+                    local_input_closed = true;
+                    input = "exit\n";
+                } else if (EINTR != errno) {
+                    return HAILO_INTERNAL_FAILURE;
+                }
+            } else if ((poll_result > 0) && (0 != (local_input.revents & POLLHUP))) {
+                local_input_closed = true;
+                input = "exit\n";
+            }
+        }
+
+        const auto current_size = terminal_size();
+        TRY(auto result, device.debug_shell_io(token, session_id, input, std::chrono::milliseconds(50),
+            m_max_output_bytes, current_size.first, current_size.second));
+        CHECK_SUCCESS(write_all(STDOUT_FILENO, result.output));
+        if (result.eof) {
+            return (0 == result.exit_code) ? HAILO_SUCCESS : HAILO_INTERNAL_FAILURE;
+        }
+    }
 }
 
 FwControlDebugCommand::FwControlDebugCommand(CLI::App &parent_app) :

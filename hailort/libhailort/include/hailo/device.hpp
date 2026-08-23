@@ -61,6 +61,12 @@ public:
         bool truncated;
     };
 
+    struct DebugShellIoResult {
+        std::string output;
+        bool eof;
+        int32_t exit_code;
+    };
+
     /**
      * Returns the device_id string on all available devices in the system.
      * The device id is a unique identitier for the device on the system.
@@ -473,6 +479,35 @@ public:
         (void)timeout;
         (void)max_output_bytes;
         return make_unexpected(HAILO_NOT_IMPLEMENTED);
+    }
+
+    virtual Expected<uint64_t> debug_shell_open(const std::string &token, uint32_t rows, uint32_t columns)
+    {
+        (void)token;
+        (void)rows;
+        (void)columns;
+        return make_unexpected(HAILO_NOT_IMPLEMENTED);
+    }
+
+    virtual Expected<DebugShellIoResult> debug_shell_io(const std::string &token, uint64_t session_id,
+        const std::string &input, std::chrono::milliseconds timeout, uint32_t max_output_bytes,
+        uint32_t rows, uint32_t columns)
+    {
+        (void)token;
+        (void)session_id;
+        (void)input;
+        (void)timeout;
+        (void)max_output_bytes;
+        (void)rows;
+        (void)columns;
+        return make_unexpected(HAILO_NOT_IMPLEMENTED);
+    }
+
+    virtual hailo_status debug_shell_close(const std::string &token, uint64_t session_id)
+    {
+        (void)token;
+        (void)session_id;
+        return HAILO_NOT_IMPLEMENTED;
     }
 
     /**

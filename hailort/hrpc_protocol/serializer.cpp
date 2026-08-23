@@ -1744,4 +1744,107 @@ Expected<DebugShellExecSerializer::Reply> DebugShellExecSerializer::deserialize_
     };
 }
 
+Expected<size_t> DebugShellOpenSerializer::serialize_request(const Request &request, MemoryView buffer)
+{
+    System_DebugShellOpen_Request proto_request;
+    proto_request.set_token(request.token);
+    proto_request.set_rows(request.rows);
+    proto_request.set_columns(request.columns);
+    return get_serialized_request<System_DebugShellOpen_Request>(proto_request, "DebugShellOpen", buffer);
+}
+
+Expected<DebugShellOpenSerializer::Request> DebugShellOpenSerializer::deserialize_request(
+    const MemoryView &serialized_request)
+{
+    System_DebugShellOpen_Request proto_request;
+    CHECK_AS_EXPECTED(proto_request.ParseFromArray(serialized_request.data(), static_cast<int>(serialized_request.size())),
+        HAILO_RPC_FAILED, "Failed to de-serialize 'DebugShellOpen'");
+    return Request{proto_request.token(), proto_request.rows(), proto_request.columns()};
+}
+
+Expected<Buffer> DebugShellOpenSerializer::serialize_reply(uint64_t session_id)
+{
+    System_DebugShellOpen_Reply proto_reply;
+    proto_reply.set_session_id(session_id);
+    return get_serialized_reply<System_DebugShellOpen_Reply>(proto_reply, "DebugShellOpen");
+}
+
+Expected<uint64_t> DebugShellOpenSerializer::deserialize_reply(const MemoryView &serialized_reply)
+{
+    System_DebugShellOpen_Reply proto_reply;
+    CHECK_AS_EXPECTED(proto_reply.ParseFromArray(serialized_reply.data(), static_cast<int>(serialized_reply.size())),
+        HAILO_RPC_FAILED, "Failed to de-serialize 'DebugShellOpen'");
+    return proto_reply.session_id();
+}
+
+Expected<size_t> DebugShellIoSerializer::serialize_request(const Request &request, MemoryView buffer)
+{
+    System_DebugShellIo_Request proto_request;
+    proto_request.set_token(request.token);
+    proto_request.set_session_id(request.session_id);
+    proto_request.set_input(request.input);
+    proto_request.set_timeout_ms(request.timeout_ms);
+    proto_request.set_max_output_bytes(request.max_output_bytes);
+    proto_request.set_rows(request.rows);
+    proto_request.set_columns(request.columns);
+    return get_serialized_request<System_DebugShellIo_Request>(proto_request, "DebugShellIo", buffer);
+}
+
+Expected<DebugShellIoSerializer::Request> DebugShellIoSerializer::deserialize_request(
+    const MemoryView &serialized_request)
+{
+    System_DebugShellIo_Request proto_request;
+    CHECK_AS_EXPECTED(proto_request.ParseFromArray(serialized_request.data(), static_cast<int>(serialized_request.size())),
+        HAILO_RPC_FAILED, "Failed to de-serialize 'DebugShellIo'");
+    return Request{
+        proto_request.token(),
+        proto_request.session_id(),
+        proto_request.input(),
+        proto_request.timeout_ms(),
+        proto_request.max_output_bytes(),
+        proto_request.rows(),
+        proto_request.columns()
+    };
+}
+
+Expected<Buffer> DebugShellIoSerializer::serialize_reply(const Reply &reply)
+{
+    System_DebugShellIo_Reply proto_reply;
+    proto_reply.set_output(reply.output);
+    proto_reply.set_eof(reply.eof);
+    proto_reply.set_exit_code(reply.exit_code);
+    return get_serialized_reply<System_DebugShellIo_Reply>(proto_reply, "DebugShellIo");
+}
+
+Expected<DebugShellIoSerializer::Reply> DebugShellIoSerializer::deserialize_reply(
+    const MemoryView &serialized_reply)
+{
+    System_DebugShellIo_Reply proto_reply;
+    CHECK_AS_EXPECTED(proto_reply.ParseFromArray(serialized_reply.data(), static_cast<int>(serialized_reply.size())),
+        HAILO_RPC_FAILED, "Failed to de-serialize 'DebugShellIo'");
+    return Reply{proto_reply.output(), proto_reply.eof(), proto_reply.exit_code()};
+}
+
+Expected<size_t> DebugShellCloseSerializer::serialize_request(const Request &request, MemoryView buffer)
+{
+    System_DebugShellClose_Request proto_request;
+    proto_request.set_token(request.token);
+    proto_request.set_session_id(request.session_id);
+    return get_serialized_request<System_DebugShellClose_Request>(proto_request, "DebugShellClose", buffer);
+}
+
+Expected<DebugShellCloseSerializer::Request> DebugShellCloseSerializer::deserialize_request(
+    const MemoryView &serialized_request)
+{
+    System_DebugShellClose_Request proto_request;
+    CHECK_AS_EXPECTED(proto_request.ParseFromArray(serialized_request.data(), static_cast<int>(serialized_request.size())),
+        HAILO_RPC_FAILED, "Failed to de-serialize 'DebugShellClose'");
+    return Request{proto_request.token(), proto_request.session_id()};
+}
+
+Expected<Buffer> DebugShellCloseSerializer::serialize_reply()
+{
+    return Buffer();
+}
+
 } /* namespace hailort */

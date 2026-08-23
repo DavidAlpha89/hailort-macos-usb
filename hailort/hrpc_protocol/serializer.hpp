@@ -74,6 +74,9 @@ enum class HailoRpcActionID {
 
     SYSTEM__RESET,
     SYSTEM__DEBUG_SHELL_EXEC,
+    SYSTEM__DEBUG_SHELL_OPEN,
+    SYSTEM__DEBUG_SHELL_IO,
+    SYSTEM__DEBUG_SHELL_CLOSE,
 
     MAX_VALUE,
 };
@@ -641,6 +644,62 @@ struct DebugShellExecSerializer
     static Expected<Request> deserialize_request(const MemoryView &serialized_request);
     static Expected<Buffer> serialize_reply(const Reply &reply);
     static Expected<Reply> deserialize_reply(const MemoryView &serialized_reply);
+};
+
+struct DebugShellOpenSerializer
+{
+    DebugShellOpenSerializer() = delete;
+
+    struct Request {
+        std::string token;
+        uint32_t rows;
+        uint32_t columns;
+    };
+
+    static Expected<size_t> serialize_request(const Request &request, MemoryView buffer);
+    static Expected<Request> deserialize_request(const MemoryView &serialized_request);
+    static Expected<Buffer> serialize_reply(uint64_t session_id);
+    static Expected<uint64_t> deserialize_reply(const MemoryView &serialized_reply);
+};
+
+struct DebugShellIoSerializer
+{
+    DebugShellIoSerializer() = delete;
+
+    struct Request {
+        std::string token;
+        uint64_t session_id;
+        std::string input;
+        uint32_t timeout_ms;
+        uint32_t max_output_bytes;
+        uint32_t rows;
+        uint32_t columns;
+    };
+
+    struct Reply {
+        std::string output;
+        bool eof;
+        int32_t exit_code;
+    };
+
+    static Expected<size_t> serialize_request(const Request &request, MemoryView buffer);
+    static Expected<Request> deserialize_request(const MemoryView &serialized_request);
+    static Expected<Buffer> serialize_reply(const Reply &reply);
+    static Expected<Reply> deserialize_reply(const MemoryView &serialized_reply);
+};
+
+struct DebugShellCloseSerializer
+{
+    DebugShellCloseSerializer() = delete;
+
+    struct Request {
+        std::string token;
+        uint64_t session_id;
+    };
+
+    static Expected<size_t> serialize_request(const Request &request, MemoryView buffer);
+    static Expected<Request> deserialize_request(const MemoryView &serialized_request);
+    static Expected<Buffer> serialize_reply();
 };
 
 } /* namespace hailort */

@@ -61,6 +61,7 @@ protected:
 
 private:
     std::string load_token() const;
+    hailo_status execute_interactive(Device &device, const std::string &token);
 
     std::string m_command;
     std::string m_token_file;

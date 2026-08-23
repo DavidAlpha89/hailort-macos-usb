@@ -119,6 +119,9 @@ public:
     hailo_status handle_device_get_current_limit(const MemoryView&, ClientConnectionPtr, ResponseWriter);
 #ifdef HAILO_ENABLE_DEBUG_RPC_SHELL
     hailo_status handle_system_debug_shell_exec(const MemoryView&, ClientConnectionPtr, ResponseWriter);
+    hailo_status handle_system_debug_shell_open(const MemoryView&, ClientConnectionPtr, ResponseWriter);
+    hailo_status handle_system_debug_shell_io(const MemoryView&, ClientConnectionPtr, ResponseWriter);
+    hailo_status handle_system_debug_shell_close(const MemoryView&, ClientConnectionPtr, ResponseWriter);
 #endif
 
     friend class ConfiguredInferModelRunAsyncHandler;

@@ -1223,6 +1223,36 @@ hailo_status HailoRTServer::handle_system_debug_shell_exec(const MemoryView &req
     TRY(auto reply, DebugShellExecSerializer::serialize_reply(shell_result));
     return response_writer.write(HAILO_SUCCESS, std::move(reply));
 }
+
+hailo_status HailoRTServer::handle_system_debug_shell_open(const MemoryView &request,
+    ClientConnectionPtr client_connection, ResponseWriter response_writer)
+{
+    (void)client_connection;
+    TRY(auto shell_request, DebugShellOpenSerializer::deserialize_request(request));
+    TRY(auto session_id, DebugShellRunner::open(shell_request));
+    TRY(auto reply, DebugShellOpenSerializer::serialize_reply(session_id));
+    return response_writer.write(HAILO_SUCCESS, std::move(reply));
+}
+
+hailo_status HailoRTServer::handle_system_debug_shell_io(const MemoryView &request,
+    ClientConnectionPtr client_connection, ResponseWriter response_writer)
+{
+    (void)client_connection;
+    TRY(auto shell_request, DebugShellIoSerializer::deserialize_request(request));
+    TRY(auto shell_result, DebugShellRunner::io(shell_request));
+    TRY(auto reply, DebugShellIoSerializer::serialize_reply(shell_result));
+    return response_writer.write(HAILO_SUCCESS, std::move(reply));
+}
+
+hailo_status HailoRTServer::handle_system_debug_shell_close(const MemoryView &request,
+    ClientConnectionPtr client_connection, ResponseWriter response_writer)
+{
+    (void)client_connection;
+    TRY(auto shell_request, DebugShellCloseSerializer::deserialize_request(request));
+    CHECK_SUCCESS(DebugShellRunner::close(shell_request));
+    TRY(auto reply, DebugShellCloseSerializer::serialize_reply());
+    return response_writer.write(HAILO_SUCCESS, std::move(reply));
+}
 #endif
 
 Expected<Dispatcher> HailoRTServer::create_dispatcher()
@@ -1269,6 +1299,9 @@ Expected<Dispatcher> HailoRTServer::create_dispatcher()
     REGISTER_ACTION(dispatcher, DEVICE__GET_CURRENT_LIMIT, handle_device_get_current_limit);
 #ifdef HAILO_ENABLE_DEBUG_RPC_SHELL
     REGISTER_ACTION(dispatcher, SYSTEM__DEBUG_SHELL_EXEC, handle_system_debug_shell_exec);
+    REGISTER_ACTION(dispatcher, SYSTEM__DEBUG_SHELL_OPEN, handle_system_debug_shell_open);
+    REGISTER_ACTION(dispatcher, SYSTEM__DEBUG_SHELL_IO, handle_system_debug_shell_io);
+    REGISTER_ACTION(dispatcher, SYSTEM__DEBUG_SHELL_CLOSE, handle_system_debug_shell_close);
 #endif
     return dispatcher;
 }

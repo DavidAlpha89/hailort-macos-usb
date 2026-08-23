@@ -467,3 +467,37 @@ message System_DebugShellExec_Reply {
     bool timed_out = 3;
     bool truncated = 4;
 }
+
+message System_DebugShellOpen_Request {
+    string token = 1;
+    uint32 rows = 2;
+    uint32 columns = 3;
+}
+
+message System_DebugShellOpen_Reply {
+    uint64 session_id = 1;
+}
+
+message System_DebugShellIo_Request {
+    string token = 1;
+    uint64 session_id = 2;
+    bytes input = 3;
+    uint32 timeout_ms = 4;
+    uint32 max_output_bytes = 5;
+    uint32 rows = 6;
+    uint32 columns = 7;
+}
+
+message System_DebugShellIo_Reply {
+    bytes output = 1;
+    bool eof = 2;
+    int32 exit_code = 3;
+}
+
+message System_DebugShellClose_Request {
+    string token = 1;
+    uint64 session_id = 2;
+}
+
+message System_DebugShellClose_Reply {
+}

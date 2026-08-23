@@ -28,6 +28,7 @@ extension, System Extension, or privileged daemon is installed.
 | Qwen3-1.7B GenAI inference | ✅ |
 | LLM load, TTFT and throughput benchmark | ✅ |
 | Ollama and OpenAI-compatible API | ✅ [companion repository](https://github.com/relaxcloud-cn/hailo-ollama-macos) |
+| Interactive Runtime RPC shell | 🧪 Experimental; disabled in device builds by default |
 | Intel Mac, PCIe, DMA-BUF, GStreamer | ❌ Not supported |
 | pyHailoRT wheel | ❌ Not packaged |
 | Signing and notarization | ❌ Not implemented |
@@ -156,6 +157,7 @@ mean that persistent firmware is damaged or outdated.
 
 - [Complete macOS USB guide](docs/macos-usb.md)
 - [Loader VM preparation](docs/macos-loader-vm.md)
+- [Interactive Runtime RPC shell](docs/runtime-rpc-shell.md)
 - [Companion Hailo-Ollama/OpenAI server](https://github.com/relaxcloud-cn/hailo-ollama-macos)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)

@@ -72,6 +72,11 @@ public:
     virtual Expected<size_t> fetch_logs(MemoryView buffer, hailo_log_type_t log_type) override;
     virtual Expected<DebugShellResult> debug_shell_exec(const std::string &token, const std::string &command,
         std::chrono::milliseconds timeout, uint32_t max_output_bytes) override;
+    virtual Expected<uint64_t> debug_shell_open(const std::string &token, uint32_t rows, uint32_t columns) override;
+    virtual Expected<DebugShellIoResult> debug_shell_io(const std::string &token, uint64_t session_id,
+        const std::string &input, std::chrono::milliseconds timeout, uint32_t max_output_bytes,
+        uint32_t rows, uint32_t columns) override;
+    virtual hailo_status debug_shell_close(const std::string &token, uint64_t session_id) override;
 
 private:
     static Expected<std::shared_ptr<Client>> create_connected_client(const std::string &device_id);

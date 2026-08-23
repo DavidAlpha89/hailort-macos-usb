@@ -15,6 +15,9 @@ class DebugShellRunner final
 {
 public:
     static Expected<DebugShellExecSerializer::Reply> execute(const DebugShellExecSerializer::Request &request);
+    static Expected<uint64_t> open(const DebugShellOpenSerializer::Request &request);
+    static Expected<DebugShellIoSerializer::Reply> io(const DebugShellIoSerializer::Request &request);
+    static hailo_status close(const DebugShellCloseSerializer::Request &request);
 
     DebugShellRunner() = delete;
 };

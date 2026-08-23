@@ -461,4 +461,45 @@ Expected<Device::DebugShellResult> DeviceHrpcClient::debug_shell_exec(const std:
     return DebugShellResult{reply.exit_code, std::move(reply.output), reply.timed_out, reply.truncated};
 }
 
+Expected<uint64_t> DeviceHrpcClient::debug_shell_open(const std::string &token, uint32_t rows, uint32_t columns)
+{
+    using Serializer = DebugShellOpenSerializer;
+    CHECK_NOT_NULL(m_client, HAILO_INVALID_OPERATION);
+    TRY(auto request_buffer, m_client->allocate_request_buffer(), "Failed to allocate request buffer");
+    Serializer::Request request{token, rows, columns};
+    TRY(auto request_size, Serializer::serialize_request(request, MemoryView(*request_buffer)));
+    TRY(auto result, m_client->execute_request(static_cast<uint32_t>(HailoRpcActionID::SYSTEM__DEBUG_SHELL_OPEN),
+        MemoryView(request_buffer->data(), request_size)));
+    return Serializer::deserialize_reply(MemoryView(result.body.data(), result.header.size));
+}
+
+Expected<Device::DebugShellIoResult> DeviceHrpcClient::debug_shell_io(const std::string &token, uint64_t session_id,
+    const std::string &input, std::chrono::milliseconds timeout, uint32_t max_output_bytes,
+    uint32_t rows, uint32_t columns)
+{
+    using Serializer = DebugShellIoSerializer;
+    CHECK_NOT_NULL(m_client, HAILO_INVALID_OPERATION);
+    TRY(auto request_buffer, m_client->allocate_request_buffer(), "Failed to allocate request buffer");
+    Serializer::Request request{token, session_id, input, static_cast<uint32_t>(timeout.count()),
+        max_output_bytes, rows, columns};
+    TRY(auto request_size, Serializer::serialize_request(request, MemoryView(*request_buffer)));
+    TRY(auto result, m_client->execute_request(static_cast<uint32_t>(HailoRpcActionID::SYSTEM__DEBUG_SHELL_IO),
+        MemoryView(request_buffer->data(), request_size), {}, {}, timeout + std::chrono::seconds(2)));
+    TRY(auto reply, Serializer::deserialize_reply(MemoryView(result.body.data(), result.header.size)));
+    return DebugShellIoResult{std::move(reply.output), reply.eof, reply.exit_code};
+}
+
+hailo_status DeviceHrpcClient::debug_shell_close(const std::string &token, uint64_t session_id)
+{
+    using Serializer = DebugShellCloseSerializer;
+    CHECK_NOT_NULL(m_client, HAILO_INVALID_OPERATION);
+    TRY(auto request_buffer, m_client->allocate_request_buffer(), "Failed to allocate request buffer");
+    Serializer::Request request{token, session_id};
+    TRY(auto request_size, Serializer::serialize_request(request, MemoryView(*request_buffer)));
+    TRY(auto result, m_client->execute_request(static_cast<uint32_t>(HailoRpcActionID::SYSTEM__DEBUG_SHELL_CLOSE),
+        MemoryView(request_buffer->data(), request_size)));
+    (void)result;
+    return HAILO_SUCCESS;
+}
+
 } /* namespace hailort */
