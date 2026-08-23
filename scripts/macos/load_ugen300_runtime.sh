@@ -2,7 +2,7 @@
 set -euo pipefail
 
 loader_name="UGen300 USB Loader"
-runtime_name="UGen300 USB AI Accelerator (Hailo-10H)"
+runtime_name="${HAILO_RUNTIME_USB_PRODUCT:-UGen300 USB AI Accelerator (Hailo-10H)}"
 
 usage() {
     echo "Usage: $0 [hailo-loader.qcow2]" >&2

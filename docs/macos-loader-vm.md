@@ -50,3 +50,4 @@ from macOS.
 - `HAILO_LOADER_TIMEOUT`: runtime enumeration timeout in seconds; default `90`.
 - `HAILO_QEMU_SYSTEM_AARCH64`: alternate QEMU binary.
 - `HAILO_QEMU_EFI`: alternate AArch64 UEFI firmware file.
+- `HAILO_RUNTIME_USB_PRODUCT`: alternate expected USB product string for a local lab Runtime.
