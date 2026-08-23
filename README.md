@@ -33,6 +33,35 @@ extension, System Extension, or privileged daemon is installed.
 | pyHailoRT wheel | ❌ Not packaged |
 | Signing and notarization | ❌ Not implemented |
 
+## Experimental Runtime RPC shell
+
+The `codex/runtime-rpc-shell` branch provides an interactive root PTY for a local
+experimental Runtime. The device-side server must be built with
+`HAILO_ENABLE_DEBUG_RPC_SHELL=ON`; this option is off by default, and the official
+Runtime does not register these HRPC actions.
+
+> [!WARNING]
+> This is a device-side root shell. Use it only on hardware you own or are authorized
+> to test. Never publish its token or redistribute a modified vendor Runtime.
+
+After loading the matching experimental Runtime, open an interactive shell from macOS:
+
+```bash
+scripts/macos/debug_shell.sh
+```
+
+Execute one short command:
+
+```bash
+scripts/macos/debug_shell.sh -c 'id; uname -a'
+```
+
+The Loader uploads this Runtime into RAM. This project does not invoke the Flash update
+path, so a device reboot or power cycle returns it to Loader mode. Tokens, Runtime
+images, qcow2 disks, and HEFs must stay out of Git. See the
+[interactive Runtime RPC shell guide](docs/runtime-rpc-shell.md) for build, ABI, and
+protocol limits.
+
 ## Quick start
 
 ### 1. Clone and build

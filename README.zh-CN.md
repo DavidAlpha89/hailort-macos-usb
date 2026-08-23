@@ -33,6 +33,32 @@ ASUS UGen300 USB AI 加速器。
 | pyHailoRT wheel | ❌ 尚未打包 |
 | 代码签名与公证 | ❌ 尚未实现 |
 
+## 实验性 Runtime RPC Shell
+
+`codex/runtime-rpc-shell` 分支提供一个面向本地实验 Runtime 的交互式 Root PTY。设备端必须
+使用 `HAILO_ENABLE_DEBUG_RPC_SHELL=ON` 构建；该选项默认关闭，官方 Runtime 不会注册这些
+HRPC action。
+
+> [!WARNING]
+> 这是设备端 Root Shell。只应在你拥有或获准测试的设备上使用，不要公开令牌或分发修改后
+> 的厂商 Runtime。
+
+加载匹配的实验 Runtime 后，在 macOS 上进入交互 Shell：
+
+```bash
+scripts/macos/debug_shell.sh
+```
+
+执行单条短命令：
+
+```bash
+scripts/macos/debug_shell.sh -c 'id; uname -a'
+```
+
+实验 Runtime 由 Loader 上传到 RAM；本项目不会调用 Flash 更新流程，设备 reboot 或断电后
+会回到 Loader。令牌、Runtime、qcow2 和 HEF 均不应提交到 Git。构建、ABI 兼容和协议边界
+请参阅[交互式 Runtime RPC Shell 指南](docs/runtime-rpc-shell.md)。
+
 ## 快速开始
 
 ### 1. 克隆并构建
