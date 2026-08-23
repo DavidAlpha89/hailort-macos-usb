@@ -52,6 +52,22 @@ protected:
     virtual hailo_status execute_on_device(Device &device) override;
 };
 
+class FwControlDebugShellCommand : public DeviceCommand {
+public:
+    explicit FwControlDebugShellCommand(CLI::App &parent_app);
+
+protected:
+    virtual hailo_status execute_on_device(Device &device) override;
+
+private:
+    std::string load_token() const;
+
+    std::string m_command;
+    std::string m_token_file;
+    uint32_t m_timeout_ms;
+    uint32_t m_max_output_bytes;
+};
+
 class FwControlDebugCommand : public ContainerCommand {
 public:
     explicit FwControlDebugCommand(CLI::App &parent_app);

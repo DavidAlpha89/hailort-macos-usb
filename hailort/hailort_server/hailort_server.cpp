@@ -16,6 +16,9 @@
 #include "hrpc/server_resource_manager.hpp"
 #include "hrpc_protocol/serializer.hpp"
 #include "net_flow/ops/nms_post_process.hpp"
+#ifdef HAILO_ENABLE_DEBUG_RPC_SHELL
+#include "debug_shell.hpp"
+#endif
 
 #include <unordered_map>
 
@@ -1210,6 +1213,18 @@ hailo_status DeviceEchoBufferHandler::do_action(ResponseWriter response_writer)
     return response_writer.write(HAILO_SUCCESS, {}, {m_buffer});
 }
 
+#ifdef HAILO_ENABLE_DEBUG_RPC_SHELL
+hailo_status HailoRTServer::handle_system_debug_shell_exec(const MemoryView &request,
+    ClientConnectionPtr client_connection, ResponseWriter response_writer)
+{
+    (void)client_connection;
+    TRY(auto shell_request, DebugShellExecSerializer::deserialize_request(request));
+    TRY(auto shell_result, DebugShellRunner::execute(shell_request));
+    TRY(auto reply, DebugShellExecSerializer::serialize_reply(shell_result));
+    return response_writer.write(HAILO_SUCCESS, std::move(reply));
+}
+#endif
+
 Expected<Dispatcher> HailoRTServer::create_dispatcher()
 {
     Dispatcher dispatcher;
@@ -1252,5 +1267,8 @@ Expected<Dispatcher> HailoRTServer::create_dispatcher()
     REGISTER_ACTION_WITH_READS(dispatcher, DEVICE__ECHO_BUFFER, DeviceEchoBufferHandler);
     REGISTER_ACTION(dispatcher, SYSTEM__RESET, handle_system_reset);
     REGISTER_ACTION(dispatcher, DEVICE__GET_CURRENT_LIMIT, handle_device_get_current_limit);
+#ifdef HAILO_ENABLE_DEBUG_RPC_SHELL
+    REGISTER_ACTION(dispatcher, SYSTEM__DEBUG_SHELL_EXEC, handle_system_debug_shell_exec);
+#endif
     return dispatcher;
 }

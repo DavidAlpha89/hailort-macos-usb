@@ -70,6 +70,8 @@ public:
     virtual Expected<bool> has_power_sensor() override;
     virtual Expected<uint32_t> get_current_limit() override;
     virtual Expected<size_t> fetch_logs(MemoryView buffer, hailo_log_type_t log_type) override;
+    virtual Expected<DebugShellResult> debug_shell_exec(const std::string &token, const std::string &command,
+        std::chrono::milliseconds timeout, uint32_t max_output_bytes) override;
 
 private:
     static Expected<std::shared_ptr<Client>> create_connected_client(const std::string &device_id);

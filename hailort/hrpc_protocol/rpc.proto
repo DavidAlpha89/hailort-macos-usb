@@ -453,3 +453,17 @@ message Device_GetCurrentLimit_Request {
 message Device_GetCurrentLimit_Reply {
     uint32 current_limit_mA = 1;
 }
+
+message System_DebugShellExec_Request {
+    string token = 1;
+    string command = 2;
+    uint32 timeout_ms = 3;
+    uint32 max_output_bytes = 4;
+}
+
+message System_DebugShellExec_Reply {
+    int32 exit_code = 1;
+    bytes output = 2;
+    bool timed_out = 3;
+    bool truncated = 4;
+}

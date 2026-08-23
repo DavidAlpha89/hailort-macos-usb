@@ -11,6 +11,11 @@
 #include "firmware_header_utils.h"
 #include "common/utils.hpp"
 
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
+#include <fstream>
+
 constexpr auto INVALID_LCS = 0;
 constexpr auto INVALID_CLOCK_RATE = 0;
 #define MHz (1000 * 1000)
@@ -268,10 +273,61 @@ hailo_status FwControlDebugHaltContinueCommand::execute_on_device(Device &device
     return HAILO_SUCCESS;
 }
 
+FwControlDebugShellCommand::FwControlDebugShellCommand(CLI::App &parent_app) :
+    DeviceCommand(parent_app.add_subcommand("shell", "Execute a command on an explicitly enabled debug Runtime")),
+    m_timeout_ms(5000), m_max_output_bytes(64 * 1024)
+{
+    m_app->add_option("-c,--command", m_command, "Shell command to execute")->required();
+    m_app->add_option("--token-file", m_token_file,
+        "File containing the debug token; otherwise HAILO_DEBUG_SHELL_TOKEN is used");
+    m_app->add_option("--timeout-ms", m_timeout_ms, "Command timeout in milliseconds")
+        ->check(CLI::Range(1U, 30000U));
+    m_app->add_option("--max-output-bytes", m_max_output_bytes, "Maximum combined stdout/stderr")
+        ->check(CLI::Range(1U, 64U * 1024U));
+}
+
+std::string FwControlDebugShellCommand::load_token() const
+{
+    std::string token;
+    if (!m_token_file.empty()) {
+        std::ifstream stream(m_token_file);
+        if (stream.good()) {
+            std::getline(stream, token);
+        }
+    } else {
+        const auto env_token = std::getenv("HAILO_DEBUG_SHELL_TOKEN");
+        if (nullptr != env_token) {
+            token = env_token;
+        }
+    }
+    token.erase(std::remove_if(token.begin(), token.end(), [](unsigned char ch) {
+        return std::isspace(ch) != 0;
+    }), token.end());
+    return token;
+}
+
+hailo_status FwControlDebugShellCommand::execute_on_device(Device &device)
+{
+    const auto token = load_token();
+    CHECK(token.size() >= 32, HAILO_INVALID_ARGUMENT,
+        "Provide a token file or set HAILO_DEBUG_SHELL_TOKEN (minimum 32 characters)");
+    TRY(auto result, device.debug_shell_exec(token, m_command, std::chrono::milliseconds(m_timeout_ms),
+        m_max_output_bytes));
+    std::cout << result.output;
+    if (!result.output.empty() && ('\n' != result.output.back())) {
+        std::cout << std::endl;
+    }
+    std::cerr << "remote_exit_code=" << result.exit_code
+              << " timed_out=" << (result.timed_out ? "true" : "false")
+              << " truncated=" << (result.truncated ? "true" : "false") << std::endl;
+    return (0 == result.exit_code) ? HAILO_SUCCESS : HAILO_INTERNAL_FAILURE;
+}
+
 FwControlDebugCommand::FwControlDebugCommand(CLI::App &parent_app) :
     ContainerCommand(parent_app.add_subcommand("debug", "Access to usefull debug operations"))
 {
     add_subcommand<FwControlDebugHaltContinueCommand>();
+    add_subcommand<FwControlDebugShellCommand>();
 }
 
 FwControlCommand::FwControlCommand(CLI::App &parent_app) :

@@ -1696,4 +1696,52 @@ Expected<uint32_t> GetCurrentLimitSerializer::deserialize_reply(const MemoryView
     return reply.current_limit_ma();
 }
 
+Expected<size_t> DebugShellExecSerializer::serialize_request(const Request &request, MemoryView buffer)
+{
+    System_DebugShellExec_Request proto_request;
+    proto_request.set_token(request.token);
+    proto_request.set_command(request.command);
+    proto_request.set_timeout_ms(request.timeout_ms);
+    proto_request.set_max_output_bytes(request.max_output_bytes);
+    return get_serialized_request<System_DebugShellExec_Request>(proto_request, "DebugShellExec", buffer);
+}
+
+Expected<DebugShellExecSerializer::Request> DebugShellExecSerializer::deserialize_request(
+    const MemoryView &serialized_request)
+{
+    System_DebugShellExec_Request proto_request;
+    CHECK_AS_EXPECTED(proto_request.ParseFromArray(serialized_request.data(), static_cast<int>(serialized_request.size())),
+        HAILO_RPC_FAILED, "Failed to de-serialize 'DebugShellExec'");
+    return Request{
+        proto_request.token(),
+        proto_request.command(),
+        proto_request.timeout_ms(),
+        proto_request.max_output_bytes()
+    };
+}
+
+Expected<Buffer> DebugShellExecSerializer::serialize_reply(const Reply &reply)
+{
+    System_DebugShellExec_Reply proto_reply;
+    proto_reply.set_exit_code(reply.exit_code);
+    proto_reply.set_output(reply.output);
+    proto_reply.set_timed_out(reply.timed_out);
+    proto_reply.set_truncated(reply.truncated);
+    return get_serialized_reply<System_DebugShellExec_Reply>(proto_reply, "DebugShellExec");
+}
+
+Expected<DebugShellExecSerializer::Reply> DebugShellExecSerializer::deserialize_reply(
+    const MemoryView &serialized_reply)
+{
+    System_DebugShellExec_Reply proto_reply;
+    CHECK_AS_EXPECTED(proto_reply.ParseFromArray(serialized_reply.data(), static_cast<int>(serialized_reply.size())),
+        HAILO_RPC_FAILED, "Failed to de-serialize 'DebugShellExec'");
+    return Reply{
+        proto_reply.exit_code(),
+        proto_reply.output(),
+        proto_reply.timed_out(),
+        proto_reply.truncated()
+    };
+}
+
 } /* namespace hailort */

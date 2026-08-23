@@ -17,6 +17,7 @@ option(HAILO_BUILD_GENAI_SERVER "Build GenAI Server" OFF)
 option(HAILO_BUILD_USB "Build USB" OFF)
 option(HAILO_BUILD_FUNCTIONFS_LISTENER "Build FunctionFS listener" OFF)
 option(HAILO_BUILD_OLLAMA "Build Hailo-Ollama GenAI Model Server" OFF)
+option(HAILO_ENABLE_DEBUG_RPC_SHELL "Enable token-protected debug RPC shell in hailort_server" OFF)
 
 # Ensure Windows SDK knows the target architecture to avoid "No Target Architecture" errors.
 if (WIN32)

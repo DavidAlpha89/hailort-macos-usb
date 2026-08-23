@@ -32,6 +32,10 @@ set(HAILORT_SERVER_SOURCES
     ${HAILORT_SERVER_USB_DIR}/usb_functionfs_configure.cpp
 )
 
+if(HAILO_ENABLE_DEBUG_RPC_SHELL)
+    list(APPEND HAILORT_SERVER_SOURCES debug_shell.cpp)
+endif()
+
 if (HAILO_BUILD_GENAI_SERVER)
     if (WIN32)
         message(FATAL_ERROR "Compilation of GenAI Server is not supported on Windows")
@@ -49,6 +53,11 @@ if (HAILO_BUILD_GENAI_SERVER)
 endif()
 
 add_executable(hailort_server ${HAILORT_SERVER_SOURCES} server_main.cpp)
+
+if(HAILO_ENABLE_DEBUG_RPC_SHELL)
+    message(WARNING "Building hailort_server with the experimental root RPC shell enabled")
+    target_compile_definitions(hailort_server PRIVATE HAILO_ENABLE_DEBUG_RPC_SHELL)
+endif()
 
 target_include_directories(hailort_server PRIVATE
     ${HAILORT_SRC_DIR}

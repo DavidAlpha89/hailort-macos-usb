@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 /** hailort namespace */
 namespace hailort
@@ -51,6 +52,13 @@ public:
         bool power_measurements;
         bool current_measurements;
         bool temperature_measurements;
+    };
+
+    struct DebugShellResult {
+        int32_t exit_code;
+        std::string output;
+        bool timed_out;
+        bool truncated;
     };
 
     /**
@@ -451,6 +459,21 @@ public:
      * A new instance should be created.
      */
     virtual hailo_status reset(hailo_reset_device_mode_t mode) = 0;
+
+    /**
+     * Executes a command through an explicitly enabled debug Runtime.
+     *
+     * @warning This API is experimental and is unavailable on production Runtime images.
+     */
+    virtual Expected<DebugShellResult> debug_shell_exec(const std::string &token, const std::string &command,
+        std::chrono::milliseconds timeout, uint32_t max_output_bytes)
+    {
+        (void)token;
+        (void)command;
+        (void)timeout;
+        (void)max_output_bytes;
+        return make_unexpected(HAILO_NOT_IMPLEMENTED);
+    }
 
     /**
      * Sets a callback to be called when a notification with ID @a notification_id will be received.

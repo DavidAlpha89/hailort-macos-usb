@@ -447,4 +447,18 @@ Expected<uint32_t> DeviceHrpcClient::get_current_limit()
     return Serializer::deserialize_reply(MemoryView(result.body.data(), result.header.size));
 }
 
+Expected<Device::DebugShellResult> DeviceHrpcClient::debug_shell_exec(const std::string &token,
+    const std::string &command, std::chrono::milliseconds timeout, uint32_t max_output_bytes)
+{
+    using Serializer = DebugShellExecSerializer;
+    CHECK_NOT_NULL(m_client, HAILO_INVALID_OPERATION);
+    TRY(auto request_buffer, m_client->allocate_request_buffer(), "Failed to allocate request buffer");
+    Serializer::Request request{token, command, static_cast<uint32_t>(timeout.count()), max_output_bytes};
+    TRY(auto request_size, Serializer::serialize_request(request, MemoryView(*request_buffer)));
+    TRY(auto result, m_client->execute_request(static_cast<uint32_t>(HailoRpcActionID::SYSTEM__DEBUG_SHELL_EXEC),
+        MemoryView(request_buffer->data(), request_size), {}, {}, timeout + std::chrono::seconds(2)));
+    TRY(auto reply, Serializer::deserialize_reply(MemoryView(result.body.data(), result.header.size)));
+    return DebugShellResult{reply.exit_code, std::move(reply.output), reply.timed_out, reply.truncated};
+}
+
 } /* namespace hailort */

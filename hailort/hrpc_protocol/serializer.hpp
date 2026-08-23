@@ -73,6 +73,7 @@ enum class HailoRpcActionID {
     NOTIFICATION,
 
     SYSTEM__RESET,
+    SYSTEM__DEBUG_SHELL_EXEC,
 
     MAX_VALUE,
 };
@@ -616,6 +617,30 @@ struct GetCurrentLimitSerializer
     static Expected<rpc_object_handle_t> deserialize_request(const MemoryView &serialized_request);
     static Expected<Buffer> serialize_reply(const uint32_t current_limit_mA);
     static Expected<uint32_t> deserialize_reply(const MemoryView &serialized_reply);
+};
+
+struct DebugShellExecSerializer
+{
+    DebugShellExecSerializer() = delete;
+
+    struct Request {
+        std::string token;
+        std::string command;
+        uint32_t timeout_ms;
+        uint32_t max_output_bytes;
+    };
+
+    struct Reply {
+        int32_t exit_code;
+        std::string output;
+        bool timed_out;
+        bool truncated;
+    };
+
+    static Expected<size_t> serialize_request(const Request &request, MemoryView buffer);
+    static Expected<Request> deserialize_request(const MemoryView &serialized_request);
+    static Expected<Buffer> serialize_reply(const Reply &reply);
+    static Expected<Reply> deserialize_reply(const MemoryView &serialized_reply);
 };
 
 } /* namespace hailort */
