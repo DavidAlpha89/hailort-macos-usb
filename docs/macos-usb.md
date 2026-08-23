@@ -60,9 +60,13 @@ build-macos-usb/hailort/hailortcli/hailortcli scan
 build-macos-usb/hailort/hailortcli/hailortcli fw-control identify
 build-macos-usb/hailort/hailortcli/hailortcli run2 -t 3 set-net /path/to/model.hef
 build-macos-usb/hailort/libhailort/examples/genai/chat_example/chat_example /path/to/llm.hef
+build-macos-usb/hailort/libhailort/examples/genai/llm_benchmark/llm_benchmark /path/to/llm.hef 128
 ```
 
 Use `/exit` to leave `chat_example` cleanly so the device-side VDevice is released.
+The benchmark reports model load time, TTFT, and completion-read throughput. A completion
+read usually corresponds to one generated token, but UTF-8 buffering means it is not a
+tokenizer-verified TPS metric.
 
 Use a USB-C port that advertises 3A for performance testing. A 1.5A port can place the
 module in reduced-performance mode.

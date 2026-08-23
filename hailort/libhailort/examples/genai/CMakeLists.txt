@@ -3,12 +3,14 @@ cmake_minimum_required(VERSION 3.5.0)
 project(hailort-examples-genai)
 
 add_subdirectory(chat_example)
+add_subdirectory(llm_benchmark)
 add_subdirectory(chat_raw_prompt_example)
 add_subdirectory(vlm_example)
 add_subdirectory(speech2text_example)
 
 set(GENAI_EXAMPLE_TARGETS
     chat_example
+    llm_benchmark
     chat_raw_prompt_example
     vlm_example
     speech2text_example

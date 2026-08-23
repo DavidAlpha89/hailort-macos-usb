@@ -23,7 +23,8 @@ cmake -S "${repo_root}" -B "${build_dir}" \
     -DHAILO_BUILD_HAILORT_SERVER=OFF \
     -DHAILO_BUILD_GENAI_SERVER=OFF
 
-cmake --build "${build_dir}" --target hailortcli chat_example --parallel "$(getconf _NPROCESSORS_ONLN)"
+cmake --build "${build_dir}" --target hailortcli chat_example llm_benchmark --parallel "$(getconf _NPROCESSORS_ONLN)"
 
 echo "Built: ${build_dir}/hailort/hailortcli/hailortcli"
 echo "Built: ${build_dir}/hailort/libhailort/examples/genai/chat_example/chat_example"
+echo "Built: ${build_dir}/hailort/libhailort/examples/genai/llm_benchmark/llm_benchmark"
