@@ -1,2 +1,8 @@
+.DS_Store
 /build-macos-usb/
 /models/
+*.deb
+*.dmg
+*.hef
+*.pkg
+*.qcow2

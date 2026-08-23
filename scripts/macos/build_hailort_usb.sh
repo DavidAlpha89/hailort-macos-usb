@@ -5,8 +5,16 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
 build_dir="${1:-${repo_root}/build-macos-usb}"
 
+if [[ "$(uname -s)" != "Darwin" || "$(uname -m)" != "arm64" ]]; then
+    echo "This helper supports Apple Silicon macOS only." >&2
+    exit 1
+fi
 if ! command -v cmake >/dev/null 2>&1; then
     echo "cmake is required (brew install cmake)" >&2
+    exit 1
+fi
+if ! command -v pkg-config >/dev/null 2>&1; then
+    echo "pkg-config is required (brew install pkg-config)" >&2
     exit 1
 fi
 if ! pkg-config --exists libusb-1.0; then
@@ -14,16 +22,21 @@ if ! pkg-config --exists libusb-1.0; then
     exit 1
 fi
 
-cmake -S "${repo_root}" -B "${build_dir}" \
-    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DHAILO_BUILD_USB=ON \
-    -DHAILO_BUILD_EXAMPLES=ON \
-    -DHAILO_BUILD_GSTREAMER=OFF \
-    -DHAILO_BUILD_HAILORT_SERVER=OFF \
-    -DHAILO_BUILD_GENAI_SERVER=OFF
+if [[ ! -f "${build_dir}/CMakeCache.txt" || "${HAILORT_RECONFIGURE:-0}" == "1" ]]; then
+    cmake -S "${repo_root}" -B "${build_dir}" \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DHAILO_BUILD_USB=ON \
+        -DHAILO_BUILD_EXAMPLES=ON \
+        -DHAILO_BUILD_GSTREAMER=OFF \
+        -DHAILO_BUILD_HAILORT_SERVER=OFF \
+        -DHAILO_BUILD_GENAI_SERVER=OFF
+else
+    echo "Using existing CMake configuration: ${build_dir}"
+fi
 
-cmake --build "${build_dir}" --target hailortcli chat_example llm_benchmark --parallel "$(getconf _NPROCESSORS_ONLN)"
+cpu_count="$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu)"
+cmake --build "${build_dir}" --target hailortcli chat_example llm_benchmark --parallel "${cpu_count}"
 
 echo "Built: ${build_dir}/hailort/hailortcli/hailortcli"
 echo "Built: ${build_dir}/hailort/libhailort/examples/genai/chat_example/chat_example"

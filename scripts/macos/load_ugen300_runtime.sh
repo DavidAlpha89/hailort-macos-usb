@@ -3,10 +3,40 @@ set -euo pipefail
 
 loader_name="UGen300 USB Loader"
 runtime_name="UGen300 USB AI Accelerator (Hailo-10H)"
-vm_disk="${HAILO_LOADER_VM_DISK:-}"
+
+usage() {
+    echo "Usage: $0 [hailo-loader.qcow2]" >&2
+    echo "The disk can also be set with HAILO_LOADER_VM_DISK." >&2
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+if [[ $# -gt 1 ]]; then
+    usage
+    exit 2
+fi
+
+find_qemu_firmware() {
+    local candidate
+    if command -v brew >/dev/null 2>&1; then
+        for candidate in \
+            "$(brew --prefix qemu 2>/dev/null || true)/share/qemu/edk2-aarch64-code.fd" \
+            "$(brew --prefix 2>/dev/null || true)/share/qemu/edk2-aarch64-code.fd"; do
+            if [[ -f "${candidate}" ]]; then
+                echo "${candidate}"
+                return 0
+            fi
+        done
+    fi
+    return 1
+}
+
+vm_disk="${1:-${HAILO_LOADER_VM_DISK:-}}"
 timeout_seconds="${HAILO_LOADER_TIMEOUT:-90}"
 qemu_binary="${HAILO_QEMU_SYSTEM_AARCH64:-$(command -v qemu-system-aarch64 || true)}"
-qemu_firmware="${HAILO_QEMU_EFI:-/opt/homebrew/share/qemu/edk2-aarch64-code.fd}"
+qemu_firmware="${HAILO_QEMU_EFI:-$(find_qemu_firmware || true)}"
 
 usb_tree_contains() {
     ioreg -p IOUSB -l -w 0 | grep -Fq "$1"
@@ -21,15 +51,15 @@ if ! usb_tree_contains "${loader_name}"; then
     exit 2
 fi
 if [[ -z "${vm_disk}" || ! -f "${vm_disk}" ]]; then
-    echo "Set HAILO_LOADER_VM_DISK to the prepared ARM64 Ubuntu qcow2 image." >&2
+    echo "Provide the prepared ARM64 Ubuntu qcow2 image as an argument or set HAILO_LOADER_VM_DISK." >&2
     exit 3
 fi
 if [[ -z "${qemu_binary}" || ! -x "${qemu_binary}" ]]; then
     echo "qemu-system-aarch64 is required (brew install qemu)." >&2
     exit 4
 fi
-if [[ ! -f "${qemu_firmware}" ]]; then
-    echo "AArch64 UEFI firmware not found: ${qemu_firmware}" >&2
+if [[ -z "${qemu_firmware}" || ! -f "${qemu_firmware}" ]]; then
+    echo "AArch64 UEFI firmware was not found. Install QEMU or set HAILO_QEMU_EFI." >&2
     exit 5
 fi
 

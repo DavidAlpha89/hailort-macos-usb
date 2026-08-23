@@ -1,56 +1,75 @@
-# HailoRT USB on macOS (experimental)
+# HailoRT USB on macOS
 
-This port targets Apple Silicon macOS hosts and the ASUS UGen300 USB AI Accelerator
-(`0b05:1d6f`). It uses Homebrew `libusb` in user space; it does not install a Kext or
-DriverKit extension.
+This experimental port runs HailoRT 5.3.0 on Apple Silicon macOS and communicates with
+the ASUS UGen300 USB AI Accelerator (`0b05:1d6f`) through Homebrew `libusb`. It is a
+userspace implementation: no Kext, DriverKit extension, System Extension, or privileged
+daemon is installed.
 
-## Current scope
+## Support status
 
-- HailoRT 5.3.0 USB scan and HRPC transport
-- `hailortcli fw-control identify`
-- HAILO10H HEF execution through `run2`
-- Apple Silicon (`arm64`)
+| Area | Status | Evidence boundary |
+|---|---|---|
+| Host | Validated | Mac Studio M2 Ultra; other Apple Silicon Macs are candidates, not verified |
+| Device | Validated | ASUS UGen300 with Hailo-10H and 8 GB device memory |
+| HailoRT/runtime | Validated | Host library 5.3.0 with device runtime 5.3.0 |
+| USB scan/control | Validated | `hailortcli scan` and `fw-control identify` |
+| Vision HEF | Validated | HAILO10H YOLOv8n execution through `run2` |
+| GenAI HEF | Validated | Qwen3-1.7B chat and repeatable benchmark |
+| Hailo-Ollama | Validated separately | Ollama and OpenAI-compatible HTTP APIs in the companion fork |
+| PCIe, DMA-BUF, GStreamer | Not implemented | USB-only scope |
+| pyHailoRT wheel | Not implemented | Native C/C++ library and examples only |
+| Intel macOS | Not supported | No build or device evidence |
+| Signing/notarization | Not implemented | Local source build only |
 
-Not implemented or validated: PCIe, DMA-BUF, GStreamer, Python wheels, macOS
-notarization, and direct macOS implementation of `hailo_usb_loader`.
+The measured Qwen3-1.7B result on the tested 1.5A USB-C connection was approximately
+7.90 seconds to load, 0.816 seconds TTFT, and 3.84 completion reads per second. A
+completion read usually corresponds to a generated token, but UTF-8 buffering means this
+is not tokenizer-verified TPS. Treat these values as a reproducible local baseline, not a
+hardware guarantee.
 
 ## Build
 
 ```bash
 brew install cmake libusb pkg-config qemu
 scripts/macos/build_hailort_usb.sh
+scripts/macos/doctor.sh
 ```
 
-The binary is written to:
+Main outputs:
 
 ```text
 build-macos-usb/hailort/hailortcli/hailortcli
+build-macos-usb/hailort/libhailort/examples/genai/chat_example/chat_example
+build-macos-usb/hailort/libhailort/examples/genai/llm_benchmark/llm_benchmark
 ```
 
-## UGen300 boot requirement
+Pass a different build directory as the first build-script argument when needed.
+Set `HAILORT_RECONFIGURE=1` to force a fresh CMake configure pass while keeping the build
+directory.
 
-UGen300 initially enumerates as `UGen300 USB Loader`. The functional root filesystem
-must be uploaded after each power cycle. Hailo does not publish the source for
-`hailo_usb_loader`, so this repository does not reimplement or redistribute it.
+## Load the UGen300 runtime
 
-Prepare an ARM64 Ubuntu 24.04 qcow2 image and install the official ASUS package
-`hailort-usb-driver_5.3.0_arm64.deb`. Confirm that the image contains:
+After every power cycle, UGen300 initially enumerates as `UGen300 USB Loader`. The
+functional runtime must be uploaded before native macOS HailoRT can open the accelerator.
 
-```text
-/usr/bin/hailo_usb_loader
-/lib/firmware/hailo/hailo10h_usb/core-image-hailo-hailo10-usb-dongle.ext4
-```
-
-Then load the runtime from macOS:
+Prepare an ARM64 Ubuntu qcow2 containing the official ASUS package, following
+[the loader VM guide](macos-loader-vm.md). Then run:
 
 ```bash
-export HAILO_LOADER_VM_DISK=/absolute/path/to/hailo-loader.qcow2
-scripts/macos/load_ugen300_runtime.sh
+scripts/macos/load_ugen300_runtime.sh /absolute/path/to/hailo-loader.qcow2
 ```
 
-The helper starts the prepared VM as a disposable QEMU snapshot, passes through the
-loader device, waits for the functional USB product to appear, and terminates QEMU so
-native macOS HailoRT can claim the re-enumerated device.
+The helper boots the disk as a disposable QEMU snapshot, passes through the loader,
+waits for the runtime USB product, and stops QEMU. It does not alter the base qcow2.
+
+If `hailortcli` reports incompatible firmware just after the module was reconnected, do
+not immediately run the suggested firmware update. First check:
+
+```bash
+ioreg -p IOUSB -w0 | grep UGen300
+```
+
+`UGen300 USB Loader` means the runtime simply needs to be loaded again.
 
 ## Verify and run
 
@@ -63,16 +82,40 @@ build-macos-usb/hailort/libhailort/examples/genai/chat_example/chat_example /pat
 build-macos-usb/hailort/libhailort/examples/genai/llm_benchmark/llm_benchmark /path/to/llm.hef 128
 ```
 
-Use `/exit` to leave `chat_example` cleanly so the device-side VDevice is released.
-The benchmark reports model load time, TTFT, and completion-read throughput. A completion
-read usually corresponds to one generated token, but UTF-8 buffering means it is not a
-tokenizer-verified TPS metric.
+Use `/exit` to leave `chat_example` cleanly and release its VDevice. The benchmark reports
+device creation, model load, TTFT, total generation time, and completion-read throughput.
 
-Use a USB-C port that advertises 3A for performance testing. A 1.5A port can place the
-module in reduced-performance mode.
+For full-performance testing, use a USB-C source that advertises 3.0A. HailoRT reports a
+warning when the source advertises only 1.5A; changing ports alone may not change the
+negotiation, so validate the cable and any powered hub as well.
 
-## Firmware and licensing boundary
+## Runtime architecture
 
-Use only the official ASUS/Hailo firmware update workflow. The Hailo-10H firmware
-license permits binary redistribution under its terms but prohibits modification and
-reverse engineering. This port changes only the MIT-licensed host HailoRT code.
+```text
+macOS application
+  -> libhailort.dylib
+  -> Hailo HRPC over libusb
+  -> UGen300 runtime loaded by the official USB loader
+  -> Hailo-10H accelerator and device memory
+```
+
+The macOS host does not run the device firmware or replace the proprietary loader. The
+temporary Linux VM is used only to perform the vendor-supported runtime upload after a
+power cycle.
+
+## Source and licensing boundary
+
+This fork changes the MIT-licensed host HailoRT source. Keep the upstream copyright and
+license files intact.
+
+The following artifacts are intentionally ignored and must not be committed to a public
+fork:
+
+- `hailort-usb-driver_*.deb`;
+- Hailo firmware and runtime root filesystems;
+- qcow2/UTM VM disks;
+- HEFs and model weights;
+- local logs, credentials, and device-specific identifiers.
+
+Obtain vendor artifacts from official ASUS/Hailo channels and use them under their own
+terms. This repository does not grant redistribution rights for those artifacts.

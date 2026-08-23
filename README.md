@@ -2,6 +2,38 @@
   <img src=".hailort.jpg" />
 </p>
 
+> [!IMPORTANT]
+> This branch is an experimental, community-maintained Apple Silicon macOS port based on
+> upstream HailoRT v5.3.0. It is not an official Hailo or ASUS release. Linux and Windows
+> behavior remains upstream-owned; the macOS path is validated only for the USB device and
+> workloads listed below.
+
+## Experimental Apple Silicon macOS USB port
+
+This fork adds a userspace `libusb` transport for the ASUS UGen300 USB AI Accelerator
+(Hailo-10H, USB ID `0b05:1d6f`). It does not install a Kext or DriverKit extension.
+
+Validated on an Apple Silicon Mac with:
+
+- HailoRT and device runtime 5.3.0;
+- `hailortcli scan` and `fw-control identify`;
+- HAILO10H vision HEF execution;
+- Qwen3-1.7B GenAI execution and repeatable TTFT/throughput measurements;
+- the companion Hailo-Ollama macOS port.
+
+Quick start:
+
+```bash
+brew install cmake libusb pkg-config qemu
+scripts/macos/build_hailort_usb.sh
+scripts/macos/doctor.sh
+```
+
+UGen300 returns to a USB loader after every power cycle. Follow
+[the macOS USB guide](docs/macos-usb.md) before running inference. The repository contains
+host-side source and automation only; it does not redistribute ASUS packages, firmware,
+VM images, HEFs, or model weights.
+
 Note: The `master` branch supports only the Hailo-10 and Hailo-15 device families. For Hailo-8, Hailo-8R, and Hailo-8L devices, please use the `hailo8` branch.
 
 # HailoRT #
@@ -17,7 +49,8 @@ and transfer data to/from the device; it includes the Hailo-8 firmware that runs
 - pyHailoRT - HailoRT Python API, which wraps the runtime library.
 - HailoRT GStreamer element (HailoNet).
 
-HailoRT supports Linux and Windows, and it can be compiled from sources to be integrated with various x86 and ARM processors.
+Upstream HailoRT supports Linux and Windows and can be integrated with various x86 and ARM
+processors. This fork adds the experimental macOS USB path described above.
 
 ## Usage
 
@@ -36,6 +69,11 @@ See [**hailo.ai developer zone - HailoRT changelog**](https://hailo.ai/developer
 HailoRT uses 2 licenses:
 - libhailort, pyhailort & hailortcli - distributed under the [**MIT license**](https://opensource.org/licenses/MIT)
 - hailonet (GStreamer plugin) - distributed under the [**LGPL 2.1 license**](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt)
+
+## Contributing to the macOS port
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the hardware evidence expected with changes and
+[SECURITY.md](SECURITY.md) for private vulnerability reporting guidance.
 
 ## Support
 
