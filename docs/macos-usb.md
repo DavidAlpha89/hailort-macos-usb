@@ -15,7 +15,7 @@ daemon is installed.
 | USB scan/control | Validated | `hailortcli scan` and `fw-control identify` |
 | Vision HEF | Validated | HAILO10H YOLOv8n execution through `run2` |
 | GenAI HEF | Validated | Qwen3-1.7B chat and repeatable benchmark |
-| Hailo-Ollama | Validated separately | Ollama and OpenAI-compatible HTTP APIs in the companion fork |
+| Hailo-Ollama | Validated separately | Ollama and OpenAI-compatible HTTP APIs in [`relaxcloud-cn/hailo-ollama-macos`](https://github.com/relaxcloud-cn/hailo-ollama-macos) |
 | PCIe, DMA-BUF, GStreamer | Not implemented | USB-only scope |
 | pyHailoRT wheel | Not implemented | Native C/C++ library and examples only |
 | Intel macOS | Not supported | No build or device evidence |

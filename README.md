@@ -19,7 +19,7 @@ Validated on an Apple Silicon Mac with:
 - `hailortcli scan` and `fw-control identify`;
 - HAILO10H vision HEF execution;
 - Qwen3-1.7B GenAI execution and repeatable TTFT/throughput measurements;
-- the companion Hailo-Ollama macOS port.
+- the [companion Hailo-Ollama macOS port](https://github.com/relaxcloud-cn/hailo-ollama-macos).
 
 Quick start:
 
