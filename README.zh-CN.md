@@ -70,6 +70,18 @@ scripts/macos/load_ugen300_runtime.sh /absolute/path/to/hailo-loader.qcow2
 该脚本会以一次性 QEMU snapshot 启动 qcow2，仅透传 USB ID `0b05:1d6f`，等待设备切换到
 runtime 产品形态后自动关闭 QEMU。
 
+**无需虚拟机：** [DavidAlpha89/ugen300-loader](https://github.com/DavidAlpha89/ugen300-loader)
+是基于 libusb 的原生 `rfs-upload` 实现（根据官方工具的 USB 抓包编写），可直接从
+`hailort-usb-driver` 软件包中提取 runtime 镜像（`scripts/extract-image.sh`），替代第 2、3 步：
+
+```bash
+ugen300-loader rfs-upload
+```
+
+已在一台 MacBook（A18 Pro）上配合 5.3.0 loader（`Hailo Linux build v1.10.10`）验证，之后
+本仓库的 `hailortcli fw-control identify` 可按第 4 步正常工作。固件升级不在其范围内，仍需
+使用官方 Linux 工具。
+
 ### 4. 验证设备
 
 ```bash
