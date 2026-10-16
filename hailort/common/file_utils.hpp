@@ -13,6 +13,8 @@
 #include "hailo/expected.hpp"
 #include "hailo/buffer.hpp"
 
+#include <fstream>  // std::streampos/std::ifstream need complete types on newer libc++
+
 namespace hailort
 {
 
